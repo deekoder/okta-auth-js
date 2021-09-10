@@ -44,6 +44,7 @@ import {
   IdxAPI,
   SignoutRedirectUrlOptions,
   HttpAPI,
+  TransactionMeta,
 } from './types';
 import {
   transactionStatus,
@@ -109,6 +110,7 @@ import {
 } from './idx';
 import { createGlobalRequestInterceptor, setGlobalRequestInterceptor } from './idx/headers';
 import { OktaUserAgent } from './OktaUserAgent';
+import { parseOAuthResponseFromUrl } from './oidc/parseFromUrl';
 
 const Emitter = require('tiny-emitter');
 
@@ -556,9 +558,16 @@ class OktaAuth implements SDKInterface, SigninAPI, SignoutAPI {
     storage.setItem(REFERRER_PATH_STORAGE_KEY, originalUri);
   }
 
-  getOriginalUri(): string {
+  getOriginalUri(state?: string): string {
+    if (state) {
+      const meta: TransactionMeta = this.transactionManager.load({
+        oauth: true,
+        state
+      });
+      return meta.originalUri;
+    }
     const storage = browserStorage.getSessionStorage();
-    const originalUri = storage.getItem(REFERRER_PATH_STORAGE_KEY);
+    const originalUri = storage ? storage.getItem(REFERRER_PATH_STORAGE_KEY) : undefined;
     return originalUri;
   }
 
@@ -571,11 +580,17 @@ class OktaAuth implements SDKInterface, SigninAPI, SignoutAPI {
     return isLoginRedirect(this);
   }
 
-  async handleLoginRedirect(tokens?: Tokens): Promise<void> {
+  async handleLoginRedirect(tokens?: Tokens, originalUri?: string): Promise<void> {
     // Store tokens and update AuthState by the emitted events
     if (tokens) {
       this.tokenManager.setTokens(tokens);
+      originalUri = originalUri || this.getOriginalUri();
     } else if (this.isLoginRedirect()) {
+      // For redirect flow, get state from the URL and use it to retrieve the originalUri
+      const { state } = await parseOAuthResponseFromUrl(this, {});
+      if (state) {
+        originalUri = originalUri || this.getOriginalUri(state);
+      }
       await this.storeTokensFromRedirect();
     } else {
       return; // nothing to do
@@ -584,8 +599,7 @@ class OktaAuth implements SDKInterface, SigninAPI, SignoutAPI {
     // ensure auth state has been updated
     await this.authStateManager.updateAuthState();
 
-    // Get and clear originalUri from storage
-    const originalUri = this.getOriginalUri();
+    // clear originalUri from storage
     this.removeOriginalUri();
 
     // Redirect to originalUri

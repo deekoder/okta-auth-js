@@ -40,6 +40,7 @@ export interface OAuthTransactionMeta {
   clientId: string;
   urls: CustomUrls;
   ignoreSignature: boolean;
+  originalUri?: string;
 }
 
 export interface PKCETransactionMeta extends OAuthTransactionMeta {

@@ -1170,11 +1170,11 @@ Parses tokens from the redirect url and stores them.
 
 ### `setOriginalUri(uri?)`
 
-Stores the current URL state before a redirect occurs. By default it stores `window.location.href`.
+Stores the current URL state before a redirect occurs.
 
 ### `getOriginalUri()`
 
-Returns the stored URI string stored by [setOriginal](#setoriginaluriuri). By default it returns `window.location.origin`.
+Returns the stored URI string stored by [setOriginal](#setoriginaluriuri).
 
 ### `removeOriginalUri()`
 

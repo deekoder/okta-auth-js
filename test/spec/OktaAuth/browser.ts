@@ -523,6 +523,13 @@ describe('OktaAuth (browser)', function() {
       jest.spyOn(auth, 'getOriginalUri').mockReturnValue('/fakeuri');
       jest.spyOn(auth, 'removeOriginalUri');
       jest.spyOn(auth.tokenManager, 'hasExpired').mockReturnValue(false);
+
+      const parseFromUrl = auth.token.parseFromUrl = jest.fn();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parseFromUrl as any)._getLocation = jest.fn().mockReturnValue({
+        hash: '#mock-hash',
+        search: '?mock-search'
+      });
     });
 
     it('should redirect to originalUri when tokens are provided', async () => {
@@ -536,7 +543,7 @@ describe('OktaAuth (browser)', function() {
     });
 
     it('should get tokens from the callback url when under login redirect flow', async () => {
-      auth.token.parseFromUrl = jest.fn().mockResolvedValue({
+      auth.token.parseFromUrl.mockResolvedValue({
         tokens: {
           accessToken: tokens.standardAccessTokenParsed,
           idToken: tokens.standardIdTokenParsed
@@ -551,7 +558,7 @@ describe('OktaAuth (browser)', function() {
 
     it('should use options.restoreOriginalUri if provided', async () => {
       auth.options.restoreOriginalUri = jest.fn();
-      auth.token.parseFromUrl = jest.fn().mockResolvedValue({
+      auth.token.parseFromUrl.mockResolvedValue({
         tokens: {
           accessToken: tokens.standardAccessTokenParsed,
           idToken: tokens.standardIdTokenParsed
@@ -573,9 +580,9 @@ describe('OktaAuth (browser)', function() {
       expect(window.location.replace).not.toHaveBeenCalled();
     });
 
-    it('will not redirect if parseFromUrl throws an error', async () => {
+    fit('will not redirect if parseFromUrl throws an error', async () => {
       const error = new Error('mock error');
-      auth.token.parseFromUrl = jest.fn().mockImplementation(async () => {
+      auth.token.parseFromUrl.mockImplementation(async () => {
         throw error;
       });
       auth.isLoginRedirect = jest.fn().mockReturnValue(true);
