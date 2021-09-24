@@ -2,6 +2,10 @@
 
 ## 5.6.0
 
+### Features
+
+- [#948](https://github.com/okta/okta-auth-js/pull/948) Adds `Google Authenticator` support in idx module
+
 ### Other
 
 - [#947](https://github.com/okta/okta-auth-js/pull/947) TypeScript: Allow custom keys in `AuthState` interface
